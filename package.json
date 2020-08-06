@@ -1,0 +1,24 @@
+{
+  "name": "aquif-http-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "dependencies": {
+    "uuid": "^8.3.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@gitlab.com/aquifzubair2/aquif-http-server.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://gitlab.com/aquifzubair2/aquif-http-server/issues"
+  },
+  "homepage": "https://gitlab.com/aquifzubair2/aquif-http-server#readme"
+}

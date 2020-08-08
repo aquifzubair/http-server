@@ -1,7 +1,7 @@
 const http = require("http");
 const fs = require("fs");
-const { v4: uuidFunction } = require("uuid");
-let port = 5000;
+const { v4: getUuid } = require("uuid");
+const port = 3000;
 
 const readFilePromise = (path) => {
   return new Promise((resolve, reject) => {
@@ -11,26 +11,21 @@ const readFilePromise = (path) => {
   });
 };
 
-const getUuid = () => {
+const getUuidPromise = () => {
   return new Promise((resolve, reject) => {
-    let uuidObject = { uuid: uuidFunction() };
+    let uuidObject = { uuid: getUuid() };
     uuidObject ? resolve(uuidObject) : reject(`couldn't find uuid`);
   });
 };
 
-const getStatusCode = (statusCode) => {
-  if (statusCode >= 200 && statusCode < 208) return true;
-  else if ((statusCode >= 300 && statusCode <= 308) || statusCode == 226)
-    return true;
-  else if (statusCode >= 400 && statusCode <= 418) return true;
-  else if (
-    (statusCode >= 500 && statusCode <= 511) ||
-    statusCode == 511 ||
-    statusCode == 598
-  )
-    return true;
-  else if (statusCode >= 100 && statusCode <= 102) return true;
-  else throw new Error("status code not found");
+const getStatusCodePromise = (statusCode) => {
+  return new Promise((resolve, reject) => {
+    if (http.STATUS_CODES[statusCode]) {
+      resolve(statusCode);
+    } else {
+      reject(statusCode);
+    }
+  });
 };
 
 const server = http.createServer((request, response) => {
@@ -60,9 +55,7 @@ const server = http.createServer((request, response) => {
           response.end();
         })
         .catch((err) => {
-          response.writeHead(400, {
-            "content-type": "text/html",
-          });
+          response.writeHead(500);
           console.error(err);
           response.end();
         });
@@ -79,9 +72,7 @@ const server = http.createServer((request, response) => {
           response.end();
         })
         .catch((err) => {
-          response.writeHead(400, {
-            "content-type": "application/json",
-          });
+          response.writeHead(500);
           console.error(err);
           response.end();
         });
@@ -89,45 +80,46 @@ const server = http.createServer((request, response) => {
     }
 
     case "/uuid": {
-      getUuid()
+      getUuidPromise()
         .then((finalResult) => {
           response.writeHead(200, { "content-type": "application/json" });
           response.write(JSON.stringify(finalResult));
           response.end();
         })
         .catch((err) => {
-          response.writeHead(500, { "content-type": "application/json" });
-          response.write(err);
+          response.writeHead(500);
+          console.error(err)
           response.end();
         });
       return;
     }
 
     case `/status`: {
-      try {
-        if (getStatusCode(+requestCode) == true) {
-          response.writeHead(requestCode, { "content-type": "text/plain" });
-          response.write(requestCode);
+      getStatusCodePromise(requestCode)
+        .then((data) => {
+          response.writeHead(data);
+          response.write(data);
           response.end();
-        }
-      } catch (err) {
-        response.writeHead(404);
-        response.write(err.message);
-        response.end();
-      }
+        })
+        .catch((err) => {
+          console.error(err);
+          response.writeHead(500);
+          response.end();
+        });
       return;
     }
 
     case `/delay`: {
       setTimeout(() => {
         response.writeHead(200);
-        response.write(`<h1>page is delayed by ${requestCode} sec.</h1>`);
+        response.write(`page is delayed by ${requestCode} sec.`);
         response.end();
       }, +requestCode * 1000);
       return;
     }
 
     default: {
+      response.writeHead(404);
       response.write("404!, oops page not found!");
       response.end();
     }

@@ -28,6 +28,12 @@ const getStatusCodePromise = (statusCode) => {
   });
 };
 
+const errorHandler = (response, err) => {
+  response.writeHead(500);
+  console.error(err);
+  response.end();
+};
+
 const server = http.createServer((request, response) => {
   const query = request.url;
   let arrayOfQuery = query.split("/");
@@ -37,11 +43,15 @@ const server = http.createServer((request, response) => {
 
   if (arrayOfQuery.length > 3) {
     requestCode = arrayOfQuery[3];
-    requestQuery = "/" + arrayOfQuery[2];
+    if (arrayOfQuery[1] == "GET") {
+      requestQuery = "/" + arrayOfQuery[2];
+    }
   }
 
   if (arrayOfQuery.length <= 3) {
-    requestQuery = "/" + arrayOfQuery[2];
+    if (arrayOfQuery[1] == "GET") {
+      requestQuery = "/" + arrayOfQuery[2];
+    }
   }
 
   switch (requestQuery) {
@@ -55,9 +65,7 @@ const server = http.createServer((request, response) => {
           response.end();
         })
         .catch((err) => {
-          response.writeHead(500);
-          console.error(err);
-          response.end();
+          errorHandler(response, err);
         });
       return;
     }
@@ -72,9 +80,7 @@ const server = http.createServer((request, response) => {
           response.end();
         })
         .catch((err) => {
-          response.writeHead(500);
-          console.error(err);
-          response.end();
+          errorHandler(response, err);
         });
       return;
     }
@@ -87,9 +93,7 @@ const server = http.createServer((request, response) => {
           response.end();
         })
         .catch((err) => {
-          response.writeHead(500);
-          console.error(err)
-          response.end();
+          errorHandler(response, err);
         });
       return;
     }
@@ -102,19 +106,23 @@ const server = http.createServer((request, response) => {
           response.end();
         })
         .catch((err) => {
-          console.error(err);
-          response.writeHead(500);
-          response.end();
+          errorHandler(response, err);
         });
       return;
     }
 
     case `/delay`: {
-      setTimeout(() => {
-        response.writeHead(200);
-        response.write(`page is delayed by ${requestCode} sec.`);
+      if (Number.isInteger(+requestCode) && +requestCode > 0) {
+        setTimeout(() => {
+          response.writeHead(200);
+          response.write(`page is delayed by ${requestCode} sec.`);
+          response.end();
+        }, +requestCode * 1000);
+      }
+      else {
+        response.write('delay is not an integer or less than 1');
         response.end();
-      }, +requestCode * 1000);
+      }
       return;
     }
 
